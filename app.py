@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 load_dotenv()
 app = Flask(__name__)
 
-BOT_TOKEN = os.getenv("6506189895:AAHuMhk2nVqU0UDO5fITFFXAyyGM2rC5e-s")
-CHAT_ID = os.getenv("6895524607")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 TG_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
 GRADES = {
