@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مجمع مدارس علاء زكي زكي الاعدادية والثانوية</title>
+<style>
+  body { font-family: Tahoma, Arial, sans-serif; background:#f3f6fb; margin:0; padding:20px; }
+  .card { max-width:520px; margin:auto; background:#fff; padding:24px; border-radius:12px; box-shadow:0 2px 10px #0001; }
+  h1 { font-size:20px; text-align:center; color:#1e3a5f; }
+  label { display:block; margin:14px 0 6px; font-weight:bold; }
+  input[type=text], select { width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; }
+  .course { border:1px solid #ddd; border-radius:8px; padding:10px; margin-top:10px; }
+  .course input[type=file] { margin-top:6px; }
+  button { width:100%; margin-top:20px; padding:12px; background:#1e3a5f; color:#fff; border:none; border-radius:8px; font-size:16px; cursor:pointer; }
+  button:disabled { background:#888; }
+  #msg { margin-top:14px; text-align:center; font-weight:bold; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>مجمع مدارس علاء زكي زكي الاعدادية والثانوية</h1>
+  <form id="form">
+    <label>المرحلة الدراسية</label>
+    <select name="grade" id="grade" required>
+      <option value="">اختار المرحلة</option>
+      {% for key, g in grades.items() %}
+      <option value="{{ key }}">{{ g.label }}</option>
+      {% endfor %}
+    </select>
+
+    <div id="courses"></div>
+
+    <label>اسم المستخدم في المنصة</label>
+    <input type="text" name="username" required>
+
+    <label>الاسم رباعي</label>
+    <input type="text" name="full_name" required>
+
+    <button type="submit" id="btn">إرسال</button>
+    <div id="msg"></div>
+  </form>
+</div>
+
+<script>
+const grades = {{ grades | tojson }};
+const gradeSel = document.getElementById("grade");
+const coursesDiv = document.getElementById("courses");
+const msg = document.getElementById("msg");
+
+gradeSel.addEventListener("change", () => {
+  coursesDiv.innerHTML = "";
+  const g = grades[gradeSel.value];
+  if (!g) return;
+  g.courses.forEach(c => {
+    const safeId = c.replace(/\s+/g, "_");
+    const wrap = document.createElement("div");
+    wrap.className = "course";
+    wrap.innerHTML = `
+      <label><input type="checkbox" name="courses" value="${c}" class="course-check" data-id="${safeId}"> ${c}</label>
+      <input type="file" accept="image/*" name="proof_${c}" class="proof" data-id="${safeId}" style="display:none">
+    `;
+    coursesDiv.appendChild(wrap);
+  });
+  document.querySelectorAll(".course-check").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const file = document.querySelector(`.proof[data-id="${cb.dataset.id}"]`);
+      file.style.display = cb.checked ? "block" : "none";
+      file.required = cb.checked;
+    });
+  });
+});
+
+document.getElementById("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById("btn");
+  btn.disabled = true;
+  msg.textContent = "جاري الإرسال...";
+
+  const fd = new FormData(e.target);
+  const res = await fetch("/submit", { method: "POST", body: fd });
+  const data = await res.json();
+
+  if (data.ok) {
+    msg.style.color = "green";
+    msg.textContent = "تم الإرسال بنجاح ✅";
+    e.target.reset();
+    coursesDiv.innerHTML = "";
+  } else {
+    msg.style.color = "red";
+    msg.textContent = data.error;
+  }
+  btn.disabled = false;
+});
+</script>
+</body>
+  </html>
